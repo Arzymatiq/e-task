@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Task {
+    id                       String        @id @default(cuid())
+    incomingDate             DateTime      @map("incoming_date")
+    createdDate              DateTime      @default(now()) @map("created_date")
+    updatedDate              DateTime      @updatedAt @map("updated_date")
+    taskNumber               String        @map("task_number")
+    taskText                 String        @map("task_text")
+    responsible              Responsible   @relation(fields: [responsibleId], references: [id])
+    responsibleId            String        @map("responsible_id")
+    deadline                 DateTime
+    endDate                  DateTime?     @map("end_date")
+    status                   Status        @default(CREATED)
+    extensionRequested       Boolean       @default(false) @map("extenstion_request")
+    extensionRequestedStatus Status?       @map("extenstion_request_status")
+    newDeadline              DateTime?     @map("new_deadline")
+    TaskHistory              TaskHistory[]
+    TaskNotes                TaskNotes[]
+    user                     User          @relation(fields: [userId], references: [id])
+    userId                   String
+    isExpired                Boolean       @default(false) @map("is_expired")
+    executorFullName         String?       @map("executer_full_name")
+    isUrgently               Boolean       @default(false) @map("is_urgently")
+
+    @@map("task")
+}
+
+enum Status {
+    REJECTED
+    PENDING
+    CREATED
+    IN_PROCCESS
+    REQUEST_EXTENSTION
+    REJECT_REQUEST_EXTENSTION
+    APPROVE_REQUEST_EXTENSTION
+    SEND_TO_CONFIRM
+    DONE
+    ARCHIVE
+    ROLLED_BACK
+    FULFILLED
+}
+
+model Responsible {
+    id          String   @id @default(cuid())
+    createdDate DateTime @default(now()) @map("created_date")
+    updatedDate DateTime @updatedAt @map("updated_date")
+    name        String
+    longName    String?  @unique
+    tasks       Task[]
+    users       User[]
+
+    @@map("responsible")
+}
+
+model User {
+    id            String       @id @default(cuid())
+    createdAt     DateTime     @default(now()) @map("created_at")
+    updatedAt     DateTime     @updatedAt @map("updated_at")
+    role          Role         @relation(fields: [roleId], references: [id])
+    roleId        Int          @map("role_id")
+    login         String       @unique
+    fullName      String       @map("full_name")
+    password      String
+    responsible   Responsible? @relation(fields: [responsibleId], references: [id])
+    responsibleId String?
+    tasks         Task[]
+    active        Boolean      @default(false)
+
+    lastPasswordChangeDate DateTime @default(now()) @map("last_password_changed_date")
+    isPasswordDateExpired  Boolean  @default(false) @map("is_password_date_expired")
+
+    @@map("user")
+}
+
+model Role {
+    id    Int    @unique
+    name  String @unique
+    users User[]
+
+    @@map("role")
+}
+
+model TaskHistory {
+    id                String   @id @default(cuid())
+    taskId            String
+    oldStatus         Status
+    newStatus         Status
+    changedAt         DateTime @default(now())
+    changedBy         String
+    changedByFullName String
+    task              Task     @relation(fields: [taskId], references: [id])
+    details           String?
+
+    @@index([taskId])
+    @@map("task_history")
+}
+
+model TaskNotes {
+    id          String   @id @default(cuid())
+    taskId      String
+    createdDate DateTime @default(now()) @map("created_date")
+    noteBy      String
+    fullName    String
+    task        Task     @relation(fields: [taskId], references: [id])
+    note        String
+
+    @@index([taskId])
+    @@map("task_notes")
+}
