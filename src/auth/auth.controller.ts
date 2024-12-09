@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import { AuthDto, RefreshTokenDto } from './dto/auth.dto';
 import { Request, Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -26,6 +27,14 @@ export class AuthController {
         const response = await this.authService.login(dto);
         // console.log('refreshToken', refreshToken);
         // this.authService.addRefreshTokenToResponse(res, refreshToken);
+        return response;
+    }
+
+    @UsePipes(new ValidationPipe())
+    @HttpCode(201)
+    @Post('register')
+    async register(@Body() dto: CreateUserDto, @Res({ passthrough: true }) res: Response) {
+        const response = await this.authService.register(dto);
         return response;
     }
 

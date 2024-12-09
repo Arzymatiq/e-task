@@ -57,7 +57,9 @@ export class AuthService {
     async register(dto: CreateUserDto) {
         const isUserExist = await this.userService.getByLogin(dto.login);
 
-        if (isUserExist) throw new BadRequestException(ERROR_MESSAGES.ru.ALREADY_EXISTS_USER);
+        if (isUserExist) {
+            throw new BadRequestException('Пользователь с таким логином уже существует');
+        }
 
         const { password, ...user } = await this.userService.create(dto);
 
